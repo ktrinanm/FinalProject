@@ -5,7 +5,7 @@ import android.os.Bundle;
 
 public class VerifyEventInfo extends AppCompatActivity
 {
-//Hi this is new
+//Hi this is ne
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
