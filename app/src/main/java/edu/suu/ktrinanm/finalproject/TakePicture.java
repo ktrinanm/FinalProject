@@ -2,6 +2,7 @@ package edu.suu.ktrinanm.finalproject;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
@@ -78,6 +79,11 @@ public class TakePicture extends AppCompatActivity
             @Override
             public void onClick(View v) {
                 takePicture();
+
+                Intent i = new Intent(TakePicture.this, LoadingOCR.class);
+                String path = Environment.getExternalStorageDirectory()+"/pic.jpg";
+                i.putExtra("imagepath", path);
+                startActivity(i);
             }
         });
     }
@@ -209,6 +215,7 @@ public class TakePicture extends AppCompatActivity
                     super.onCaptureCompleted(session, request, result);
                     Toast.makeText(TakePicture.this, "Saved:" + file, Toast.LENGTH_SHORT).show();
                     createCameraPreview();
+
                 }
             };
             cameraDevice.createCaptureSession(outputSurfaces, new CameraCaptureSession.StateCallback() {
@@ -224,10 +231,12 @@ public class TakePicture extends AppCompatActivity
                 public void onConfigureFailed(CameraCaptureSession session) {
                 }
             }, mBackgroundHandler);
+
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
     }
+
     protected void createCameraPreview() {
         try {
             SurfaceTexture texture = textureView.getSurfaceTexture();
