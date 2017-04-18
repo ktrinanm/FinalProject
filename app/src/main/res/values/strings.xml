@@ -1,4 +1,12 @@
 <resources>
     <string name="app_name">FinalProject</string>
     <string name="take_picture">Take picture</string>
+    <string name="verify">Verify/Edit Event Information</string>
+    <string name="ve_back">Go Back</string>
+    <string name="ve_add">Add Event</string>
+    <string name="ve_start_t">Start Date/Time</string>
+    <string name="ve_end_dt">End Date/Time</string>
+    <string name="ve_title_sum">Title/Summary</string>
+    <string name="ve_descrp">Description</string>
+    <string name="ve_address">Address</string>
 </resources>
