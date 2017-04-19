@@ -3,6 +3,7 @@ package edu.suu.ktrinanm.finalproject;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -23,11 +24,13 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class LoadingOCR extends AppCompatActivity
 {
-    private Bitmap bmap;
+    private String textFromImage;
+    private TextView t;
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -38,46 +41,18 @@ public class LoadingOCR extends AppCompatActivity
         String path = i.getStringExtra("pathname");
         try
         {
-            ByteString imgBytes = ByteString.readFrom(new FileInputStream(path));
-            runVision(imgBytes);
+            ByteString[]  imgBytes = new ByteString[]{ByteString.readFrom(new FileInputStream(path))};
+            AsyncTask bg = new Background().execute(imgBytes);
+
+            t = (TextView) findViewById(R.id.ocrText);
+            /*while(bg.getStatus() != AsyncTask.Status.FINISHED)
+            {/*Do nothing}*/
+
         }
         catch(Exception e)
         {
             System.out.println("Katrina: " + e.getMessage());
         }
-    }
-
-    private void runVision(ByteString imgBytes) throws Exception
-    {
-        List<AnnotateImageRequest> requests = new ArrayList<>();
-
-
-        Image img = Image.newBuilder().setContent(imgBytes).build();
-        Feature feat = Feature.newBuilder().setType(Type.TEXT_DETECTION).build();
-        AnnotateImageRequest request =
-                AnnotateImageRequest.newBuilder().addFeatures(feat).setImage(img).build();
-        requests.add(request);
-
-        BatchAnnotateImagesResponse response =
-                ImageAnnotatorClient.create().batchAnnotateImages(requests);
-        List<AnnotateImageResponse> responses = response.getResponsesList();
-
-        for (AnnotateImageResponse res : responses) {
-            if (res.hasError()) {
-                System.out.printf("Error: %s\n", res.getError().getMessage());
-                return;
-            }
-
-            // For full list of available annotations, see http://g.co/cloud/vision/docs
-            for (EntityAnnotation annotation : res.getTextAnnotationsList()) {
-                String text = annotation.getDescription();
-                TextView t = (TextView) findViewById(R.id.ocrText);
-                t.setText(text);
-                System.out.printf("Text: %s\n", text);
-                System.out.printf("Position : %s\n", annotation.getBoundingPoly());
-            }
-        }
-
     }
 
     private Bitmap getThumbnail(String path)
@@ -95,5 +70,60 @@ public class LoadingOCR extends AppCompatActivity
             }
         }
         return thumbnail;
+    }
+
+    private class Background extends AsyncTask<ByteString, Void, String>
+    {
+        protected String doInBackground(ByteString ... byteStringsArr)
+        {
+            try {
+
+                List<AnnotateImageRequest> requests = new ArrayList<>();
+                ByteString imgBytes = byteStringsArr[0];
+
+                Image img = Image.newBuilder().setContent(imgBytes).build();
+                Feature feat = Feature.newBuilder().setType(Type.TEXT_DETECTION).build();
+                AnnotateImageRequest request =
+                        AnnotateImageRequest.newBuilder().addFeatures(feat).setImage(img).build();
+                requests.add(request);
+
+                BatchAnnotateImagesResponse response =
+                        ImageAnnotatorClient.create().batchAnnotateImages(requests);
+                List<AnnotateImageResponse> responses = response.getResponsesList();
+
+                String text = "";
+
+                for (AnnotateImageResponse res : responses) {
+                    if (res.hasError()) {
+                        System.out.printf("Error: %s\n", res.getError().getMessage());
+                        return null;
+                    }
+
+                    // For full list of available annotations, see http://g.co/cloud/vision/docs
+                    for (EntityAnnotation annotation : res.getTextAnnotationsList()) {
+                        text += annotation.getDescription();
+                        System.out.printf("Text: %s\n", text);
+                        System.out.printf("Position : %s\n", annotation.getBoundingPoly());
+                    }
+                }
+                return text;
+            }
+            catch(Exception e)
+            {
+                System.out.println(e.getMessage());
+                return null;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(String text)
+        {
+            if(text.equals(null) || text.equals(""))
+            {
+                Log.d("ERROR", "SOMETHING BAD HAPPENED IN MAKING THE TEXT STRING!!!!!!!!!!!!!!");
+            }
+            textFromImage = text;
+            t.setText(textFromImage);
+        }
     }
 }

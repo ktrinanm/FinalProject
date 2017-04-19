@@ -81,7 +81,7 @@ public class TakePicture extends AppCompatActivity
             @Override
             public void onClick(View v) {
                 takePicture();
-
+                closeCamera();
                 Intent i = new Intent(TakePicture.this, LoadingOCR.class);
                 i.putExtra("pathname", filepath);
                 startActivity(i);
