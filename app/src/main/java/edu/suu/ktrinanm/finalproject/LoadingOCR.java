@@ -19,6 +19,8 @@ import com.google.protobuf.ByteString;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 public class LoadingOCR extends AppCompatActivity
 {
@@ -30,8 +32,47 @@ public class LoadingOCR extends AppCompatActivity
         setContentView(R.layout.activity_loadingocr);
 
         Intent i = getIntent();
-        String path = i.getStringExtra("imagepath");
-        bmap = getThumbnail(path);
+        byte [] data = i.getByteArrayExtra("image");
+        //bmap = getThumbnail(path);
+        ByteString imgBytes = ByteString.copyFrom(data);
+        try
+        {
+            runVision(imgBytes);
+        }
+        catch(Exception e)
+        {
+            System.out.println("Something went wrong");
+        }
+    }
+
+    private void runVision(ByteString imgBytes) throws Exception
+    {
+        List<AnnotateImageRequest> requests = new ArrayList<>();
+
+
+        Image img = Image.newBuilder().setContent(imgBytes).build();
+        Feature feat = Feature.newBuilder().setType(Type.TEXT_DETECTION).build();
+        AnnotateImageRequest request =
+                AnnotateImageRequest.newBuilder().addFeatures(feat).setImage(img).build();
+        requests.add(request);
+
+        BatchAnnotateImagesResponse response =
+                ImageAnnotatorClient.create().batchAnnotateImages(requests);
+        List<AnnotateImageResponse> responses = response.getResponsesList();
+
+        for (AnnotateImageResponse res : responses) {
+            if (res.hasError()) {
+                System.out.printf("Error: %s\n", res.getError().getMessage());
+                return;
+            }
+
+            // For full list of available annotations, see http://g.co/cloud/vision/docs
+            for (EntityAnnotation annotation : res.getTextAnnotationsList()) {
+                System.out.printf("Text: %s\n", annotation.getDescription());
+                System.out.printf("Position : %s\n", annotation.getBoundingPoly());
+            }
+        }
+
     }
 
     private Bitmap getThumbnail(String path)
