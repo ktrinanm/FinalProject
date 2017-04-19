@@ -65,6 +65,8 @@ public class TakePicture extends AppCompatActivity
         ORIENTATIONS.append(Surface.ROTATION_180, 270);
         ORIENTATIONS.append(Surface.ROTATION_270, 180);
     }
+    private byte [] bytes;
+    private String filepath;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -81,8 +83,7 @@ public class TakePicture extends AppCompatActivity
                 takePicture();
 
                 Intent i = new Intent(TakePicture.this, LoadingOCR.class);
-                String path = Environment.getExternalStorageDirectory()+"/pic.jpg";
-                i.putExtra("imagepath", path);
+                i.putExtra("pathname", filepath);
                 startActivity(i);
             }
         });
@@ -175,6 +176,7 @@ public class TakePicture extends AppCompatActivity
             // Orientation
             int rotation = getWindowManager().getDefaultDisplay().getRotation();
             captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, ORIENTATIONS.get(rotation));
+            filepath = Environment.getExternalStorageDirectory()+"/pic.jpg";
             final File file = new File(Environment.getExternalStorageDirectory()+"/pic.jpg");
             ImageReader.OnImageAvailableListener readerListener = new ImageReader.OnImageAvailableListener() {
                 @Override
@@ -183,7 +185,7 @@ public class TakePicture extends AppCompatActivity
                     try {
                         image = reader.acquireLatestImage();
                         ByteBuffer buffer = image.getPlanes()[0].getBuffer();
-                        byte[] bytes = new byte[buffer.capacity()];
+                        bytes = new byte[buffer.capacity()];
                         buffer.get(bytes);
                         save(bytes);
                     } catch (FileNotFoundException e) {

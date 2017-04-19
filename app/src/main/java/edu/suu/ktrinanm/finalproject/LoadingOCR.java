@@ -6,9 +6,24 @@ import android.graphics.BitmapFactory;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.TextView;
+
+import com.google.cloud.vision.spi.v1.ImageAnnotatorClient;
+import com.google.cloud.vision.v1.AnnotateImageRequest;
+import com.google.cloud.vision.v1.AnnotateImageResponse;
+import com.google.cloud.vision.v1.BatchAnnotateImagesResponse;
+import com.google.cloud.vision.v1.EntityAnnotation;
+import com.google.cloud.vision.v1.Feature;
+import com.google.cloud.vision.v1.Feature.Type;
+import com.google.cloud.vision.v1.Image;
+import com.google.protobuf.ByteString;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 public class LoadingOCR extends AppCompatActivity
 {
@@ -20,8 +35,49 @@ public class LoadingOCR extends AppCompatActivity
         setContentView(R.layout.activity_loadingocr);
 
         Intent i = getIntent();
-        String path = i.getStringExtra("imagepath");
-        bmap = getThumbnail(path);
+        String path = i.getStringExtra("pathname");
+        try
+        {
+            ByteString imgBytes = ByteString.readFrom(new FileInputStream(path));
+            runVision(imgBytes);
+        }
+        catch(Exception e)
+        {
+            System.out.println("Katrina: " + e.getMessage());
+        }
+    }
+
+    private void runVision(ByteString imgBytes) throws Exception
+    {
+        List<AnnotateImageRequest> requests = new ArrayList<>();
+
+
+        Image img = Image.newBuilder().setContent(imgBytes).build();
+        Feature feat = Feature.newBuilder().setType(Type.TEXT_DETECTION).build();
+        AnnotateImageRequest request =
+                AnnotateImageRequest.newBuilder().addFeatures(feat).setImage(img).build();
+        requests.add(request);
+
+        BatchAnnotateImagesResponse response =
+                ImageAnnotatorClient.create().batchAnnotateImages(requests);
+        List<AnnotateImageResponse> responses = response.getResponsesList();
+
+        for (AnnotateImageResponse res : responses) {
+            if (res.hasError()) {
+                System.out.printf("Error: %s\n", res.getError().getMessage());
+                return;
+            }
+
+            // For full list of available annotations, see http://g.co/cloud/vision/docs
+            for (EntityAnnotation annotation : res.getTextAnnotationsList()) {
+                String text = annotation.getDescription();
+                TextView t = (TextView) findViewById(R.id.ocrText);
+                t.setText(text);
+                System.out.printf("Text: %s\n", text);
+                System.out.printf("Position : %s\n", annotation.getBoundingPoly());
+            }
+        }
+
     }
 
     private Bitmap getThumbnail(String path)
