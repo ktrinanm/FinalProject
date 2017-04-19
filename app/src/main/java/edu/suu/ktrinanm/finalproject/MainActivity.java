@@ -10,11 +10,12 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         // !!! Remove this
-        Intent i = new Intent(this, TakePicture.class);
+        Intent i = new Intent(this, LoadingOCR.class);
         startActivity(i);
     }
 }
