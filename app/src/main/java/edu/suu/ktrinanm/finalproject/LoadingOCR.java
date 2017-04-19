@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.TextView;
 
 import com.google.cloud.vision.spi.v1.ImageAnnotatorClient;
 import com.google.cloud.vision.v1.AnnotateImageRequest;
@@ -16,6 +17,8 @@ import com.google.cloud.vision.v1.Feature;
 import com.google.cloud.vision.v1.Feature.Type;
 import com.google.cloud.vision.v1.Image;
 import com.google.protobuf.ByteString;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -32,16 +35,15 @@ public class LoadingOCR extends AppCompatActivity
         setContentView(R.layout.activity_loadingocr);
 
         Intent i = getIntent();
-        byte [] data = i.getByteArrayExtra("image");
-        //bmap = getThumbnail(path);
-        ByteString imgBytes = ByteString.copyFrom(data);
+        String path = i.getStringExtra("pathname");
         try
         {
+            ByteString imgBytes = ByteString.readFrom(new FileInputStream(path));
             runVision(imgBytes);
         }
         catch(Exception e)
         {
-            System.out.println("Something went wrong");
+            System.out.println("Katrina: " + e.getMessage());
         }
     }
 
@@ -68,7 +70,10 @@ public class LoadingOCR extends AppCompatActivity
 
             // For full list of available annotations, see http://g.co/cloud/vision/docs
             for (EntityAnnotation annotation : res.getTextAnnotationsList()) {
-                System.out.printf("Text: %s\n", annotation.getDescription());
+                String text = annotation.getDescription();
+                TextView t = (TextView) findViewById(R.id.ocrText);
+                t.setText(text);
+                System.out.printf("Text: %s\n", text);
                 System.out.printf("Position : %s\n", annotation.getBoundingPoly());
             }
         }
